@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36127.28 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArgusCloud", "ArgusCloud\ArgusCloud.csproj", "{D1338701-499E-40C9-BCC7-F9A93FE6EFB4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D1338701-499E-40C9-BCC7-F9A93FE6EFB4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D1338701-499E-40C9-BCC7-F9A93FE6EFB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D1338701-499E-40C9-BCC7-F9A93FE6EFB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D1338701-499E-40C9-BCC7-F9A93FE6EFB4}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B8B47E23-E6C8-4533-9226-5D414159F0E9}
+	EndGlobalSection
+EndGlobal

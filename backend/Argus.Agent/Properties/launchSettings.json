@@ -1,0 +1,13 @@
+{
+  "profiles": {
+    "Argus.Agent": {
+      "commandName": "Project",
+      "commandLineArgs": "--register",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      },
+      "dotnetRunMessages": true
+    }
+  },
+  "$schema": "http://json.schemastore.org/launchsettings.json"
+}
