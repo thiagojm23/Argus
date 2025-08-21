@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ArgusCloud")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6923641a319b9cebc7fa68dd25afa8c5fe89cd66")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6b3b6755165bc5ad04b05e1b20bd9083128196d9")]
 [assembly: System.Reflection.AssemblyProductAttribute("ArgusCloud")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ArgusCloud")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

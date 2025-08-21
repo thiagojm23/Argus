@@ -1,0 +1,12 @@
+C:\Users\thiag\Documents\projetosPessoais\ArgusGeral\Argus\backend\ArgusCloud\ArgusCloud.Domain\bin\Debug\net9.0\ArgusCloud.Domain.deps.json
+C:\Users\thiag\Documents\projetosPessoais\ArgusGeral\Argus\backend\ArgusCloud\ArgusCloud.Domain\bin\Debug\net9.0\ArgusCloud.Domain.dll
+C:\Users\thiag\Documents\projetosPessoais\ArgusGeral\Argus\backend\ArgusCloud\ArgusCloud.Domain\bin\Debug\net9.0\ArgusCloud.Domain.pdb
+C:\Users\thiag\Documents\projetosPessoais\ArgusGeral\Argus\backend\ArgusCloud\ArgusCloud.Domain\obj\Debug\net9.0\ArgusCloud.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\thiag\Documents\projetosPessoais\ArgusGeral\Argus\backend\ArgusCloud\ArgusCloud.Domain\obj\Debug\net9.0\ArgusCloud.Domain.AssemblyInfoInputs.cache
+C:\Users\thiag\Documents\projetosPessoais\ArgusGeral\Argus\backend\ArgusCloud\ArgusCloud.Domain\obj\Debug\net9.0\ArgusCloud.Domain.AssemblyInfo.cs
+C:\Users\thiag\Documents\projetosPessoais\ArgusGeral\Argus\backend\ArgusCloud\ArgusCloud.Domain\obj\Debug\net9.0\ArgusCloud.Domain.csproj.CoreCompileInputs.cache
+C:\Users\thiag\Documents\projetosPessoais\ArgusGeral\Argus\backend\ArgusCloud\ArgusCloud.Domain\obj\Debug\net9.0\ArgusCloud.Domain.sourcelink.json
+C:\Users\thiag\Documents\projetosPessoais\ArgusGeral\Argus\backend\ArgusCloud\ArgusCloud.Domain\obj\Debug\net9.0\ArgusCloud.Domain.dll
+C:\Users\thiag\Documents\projetosPessoais\ArgusGeral\Argus\backend\ArgusCloud\ArgusCloud.Domain\obj\Debug\net9.0\refint\ArgusCloud.Domain.dll
+C:\Users\thiag\Documents\projetosPessoais\ArgusGeral\Argus\backend\ArgusCloud\ArgusCloud.Domain\obj\Debug\net9.0\ArgusCloud.Domain.pdb
+C:\Users\thiag\Documents\projetosPessoais\ArgusGeral\Argus\backend\ArgusCloud\ArgusCloud.Domain\obj\Debug\net9.0\ref\ArgusCloud.Domain.dll

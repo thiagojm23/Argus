@@ -1,0 +1,13 @@
+C:\Users\thiag\Documents\projetosPessoais\ArgusGeral\Argus\backend\ArgusCloud\ArgusCloud.Application\bin\Debug\net9.0\ArgusCloud.Application.deps.json
+C:\Users\thiag\Documents\projetosPessoais\ArgusGeral\Argus\backend\ArgusCloud\ArgusCloud.Application\bin\Debug\net9.0\ArgusCloud.Application.dll
+C:\Users\thiag\Documents\projetosPessoais\ArgusGeral\Argus\backend\ArgusCloud\ArgusCloud.Application\bin\Debug\net9.0\ArgusCloud.Application.pdb
+C:\Users\thiag\Documents\projetosPessoais\ArgusGeral\Argus\backend\ArgusCloud\ArgusCloud.Application\obj\Debug\net9.0\ArgusCloud.Application.csproj.AssemblyReference.cache
+C:\Users\thiag\Documents\projetosPessoais\ArgusGeral\Argus\backend\ArgusCloud\ArgusCloud.Application\obj\Debug\net9.0\ArgusCloud.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\thiag\Documents\projetosPessoais\ArgusGeral\Argus\backend\ArgusCloud\ArgusCloud.Application\obj\Debug\net9.0\ArgusCloud.Application.AssemblyInfoInputs.cache
+C:\Users\thiag\Documents\projetosPessoais\ArgusGeral\Argus\backend\ArgusCloud\ArgusCloud.Application\obj\Debug\net9.0\ArgusCloud.Application.AssemblyInfo.cs
+C:\Users\thiag\Documents\projetosPessoais\ArgusGeral\Argus\backend\ArgusCloud\ArgusCloud.Application\obj\Debug\net9.0\ArgusCloud.Application.csproj.CoreCompileInputs.cache
+C:\Users\thiag\Documents\projetosPessoais\ArgusGeral\Argus\backend\ArgusCloud\ArgusCloud.Application\obj\Debug\net9.0\ArgusCloud.Application.sourcelink.json
+C:\Users\thiag\Documents\projetosPessoais\ArgusGeral\Argus\backend\ArgusCloud\ArgusCloud.Application\obj\Debug\net9.0\ArgusCloud.Application.dll
+C:\Users\thiag\Documents\projetosPessoais\ArgusGeral\Argus\backend\ArgusCloud\ArgusCloud.Application\obj\Debug\net9.0\refint\ArgusCloud.Application.dll
+C:\Users\thiag\Documents\projetosPessoais\ArgusGeral\Argus\backend\ArgusCloud\ArgusCloud.Application\obj\Debug\net9.0\ArgusCloud.Application.pdb
+C:\Users\thiag\Documents\projetosPessoais\ArgusGeral\Argus\backend\ArgusCloud\ArgusCloud.Application\obj\Debug\net9.0\ref\ArgusCloud.Application.dll

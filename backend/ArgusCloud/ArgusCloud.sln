@@ -1,9 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36127.28 d17.14
+VisualStudioVersion = 17.14.36127.28
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArgusCloud", "ArgusCloud\ArgusCloud.csproj", "{D1338701-499E-40C9-BCC7-F9A93FE6EFB4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArgusCloud.API", "ArgusCloud\ArgusCloud.API.csproj", "{D1338701-499E-40C9-BCC7-F9A93FE6EFB4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArgusCloud.Domain", "ArgusCloud.Domain\ArgusCloud.Domain.csproj", "{EC00FC4E-A90A-45DE-BA3E-2027305754C2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArgusCloud.Infrastructure", "ArgusCloud.Infrastructure\ArgusCloud.Infrastructure.csproj", "{89B09997-8016-4007-831E-6932502BCE90}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArgusCloud.Application", "ArgusCloud.Application\ArgusCloud.Application.csproj", "{DAC3E975-0F53-4E1C-9F87-F5F80F70C368}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +21,18 @@ Global
 		{D1338701-499E-40C9-BCC7-F9A93FE6EFB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D1338701-499E-40C9-BCC7-F9A93FE6EFB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D1338701-499E-40C9-BCC7-F9A93FE6EFB4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EC00FC4E-A90A-45DE-BA3E-2027305754C2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EC00FC4E-A90A-45DE-BA3E-2027305754C2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EC00FC4E-A90A-45DE-BA3E-2027305754C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EC00FC4E-A90A-45DE-BA3E-2027305754C2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{89B09997-8016-4007-831E-6932502BCE90}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{89B09997-8016-4007-831E-6932502BCE90}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{89B09997-8016-4007-831E-6932502BCE90}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{89B09997-8016-4007-831E-6932502BCE90}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DAC3E975-0F53-4E1C-9F87-F5F80F70C368}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DAC3E975-0F53-4E1C-9F87-F5F80F70C368}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DAC3E975-0F53-4E1C-9F87-F5F80F70C368}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DAC3E975-0F53-4E1C-9F87-F5F80F70C368}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
