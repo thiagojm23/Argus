@@ -1,1 +1,147 @@
-.vs/
+# Arquivo .gitignore otimizado para uma solução ASP.NET Core com Vue.js 3 + TypeScript
+
+#====================================================================================
+# Seção do ASP.NET Core & Visual Studio
+#====================================================================================
+
+# Arquivos de usuário e configurações específicas do Visual Studio
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Arquivos de cache e de build do Visual Studio
+*.vs/
+*.tlog
+*.log
+*.tmp
+*.dbmdl
+*.jfm
+*.pfx
+
+# Arquivos gerados pelo ReSharper (ferramenta de produtividade)
+*_i.c
+*_p.c
+*.ncb
+*.VC.db
+*.sln.cache
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# Binários e saídas de compilação
+bin/
+obj/
+Build/
+build/
+Builds/
+builds/
+Release/
+release/
+x64/
+x86/
+bld/
+[Bb]in
+[Oo]bj
+[Dd]ebug
+[Dd]ebug/
+[Rr]elease
+[Rr]elease/
+[Dd]ebugPublic/
+[Rr]eleasePublic/
+
+# Arquivos de publicação do Web Deploy
+*.publish.xml
+*.pubxml
+
+# Arquivos do Nuget
+*.nupkg
+# A pasta de pacotes do NuGet deve ser ignorada.
+# O `nuget.exe` restaura os pacotes durante o build.
+**/packages/*
+# Exceto o arquivo de configuração de repositório de pacotes
+!**/packages/repositories.config
+# A pasta de pacotes do cache local do NuGet.
+.nuget/packages/*
+.nuget/plugins/*
+
+# Arquivos gerados pelo Entity Framework Core
+*-Migrations
+efpt.config.json
+*.Context.cs
+*.Designer.cs
+
+# Logs e arquivos de diagnóstico
+*.log
+*.log.*
+*.pidb
+*.svclog
+*.scc
+
+# Arquivos de configurações locais que não devem ser versionados
+appsettings.Development.json
+appsettings.*.json
+!appsettings.Template.json # Opcional: manter um template de configuração
+secrets.json
+user-secrets/
+UserSecretsId
+
+#====================================================================================
+# Seção do Vue.js 3 + TypeScript & Node.js
+#====================================================================================
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Diretório de dependências
+node_modules/
+.pnpm-store/
+
+# Saída de compilação do Vue/Vite
+dist/
+.output/
+.nuxt/
+
+# Arquivos de ambiente local (contêm segredos e configurações de desenvolvimento)
+.env.local
+.env.*.local
+.env
+
+# Arquivos de cache e temporários
+.cache/
+.npm/
+.vite-inspect/
+.yarn-integrity
+
+# Arquivos específicos do editor/IDE
+.vscode/*
+!.vscode/extensions.json # Recomendo versionar extensões sugeridas
+!.vscode/settings.json   # Pode ser útil compartilhar configurações do time
+.idea/
+
+# Arquivos de teste e cobertura
+coverage/
+.nyc_output/
+
+# Arquivos gerados pelo TypeScript
+*.tsbuildinfo
+
+#====================================================================================
+# Seção Geral - Sistema Operacional
+#====================================================================================
+
+# Arquivos do macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Arquivos do Windows
+Thumbs.db
+ehthumbs.db
+ehthumbs_vista.db
+[Dd]esktop.ini

@@ -7,7 +7,6 @@ namespace ArgusCloud.Application.Contratos
         [Required(ErrorMessage = "Id obrigatório")]
         public int Id { get; set; }
         public string Nome { get; set; }
-        [Required(ErrorMessage = "Nome do executável obrigatório")]
         public string NomeExecutavel { get; set; }
         public long MemoriaUsoMB { get; set; }
         public long MemoriaVirtualUsoMB { get; set; }

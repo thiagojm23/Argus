@@ -88,7 +88,29 @@ namespace ArgusCloud.Application.Servicos
             return _tokenHandler.WriteToken(token);
         }
 
-        public string GerarAccessTokenFront(Guid usuarioId, string nomeUsuario)
+        //public string GerarAccessTokenFront(Guid usuarioId, string nomeUsuario)
+        //{
+        //    var claims = new List<Claim>
+        //    {
+        //        new(ClaimTypes.NameIdentifier, usuarioId.ToString()),
+        //        new(ClaimTypes.Name, nomeUsuario),
+        //        new("tipoCliente", "front")
+        //    };
+
+        //    var tokenDescriptor = new SecurityTokenDescriptor
+        //    {
+        //        Subject = new ClaimsIdentity(claims),
+        //        Issuer = _issuer,
+        //        Expires = DateTime.UtcNow.AddMinutes(20),
+        //        Audience = _audience,
+        //        SigningCredentials = _signingCredentials
+        //    };
+
+        //    var token = _tokenHandler.CreateToken(tokenDescriptor);
+        //    return _tokenHandler.WriteToken(token);
+        //}
+
+        public string GerarTokenFront(Guid usuarioId, string nomeUsuario)
         {
             var claims = new List<Claim>
             {
@@ -101,7 +123,7 @@ namespace ArgusCloud.Application.Servicos
             {
                 Subject = new ClaimsIdentity(claims),
                 Issuer = _issuer,
-                Expires = DateTime.UtcNow.AddMinutes(20),
+                Expires = DateTime.UtcNow.AddHours(2),
                 Audience = _audience,
                 SigningCredentials = _signingCredentials
             };
@@ -110,27 +132,27 @@ namespace ArgusCloud.Application.Servicos
             return _tokenHandler.WriteToken(token);
         }
 
-        public string GerarRefreshTokenFront(Guid usuarioId, string nomeUsuario)
-        {
-            var claims = new List<Claim>
-            {
-                new(ClaimTypes.NameIdentifier, usuarioId.ToString()),
-                new(ClaimTypes.Name, nomeUsuario),
-                new("tipoCliente", "front")
-            };
+        //public string GerarRefreshTokenFront(Guid usuarioId, string nomeUsuario)
+        //{
+        //    var claims = new List<Claim>
+        //    {
+        //        new(ClaimTypes.NameIdentifier, usuarioId.ToString()),
+        //        new(ClaimTypes.Name, nomeUsuario),
+        //        new("tipoCliente", "front")
+        //    };
 
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(claims),
-                Issuer = _issuer,
-                Expires = DateTime.UtcNow.AddDays(7),
-                Audience = _audience,
-                SigningCredentials = _signingCredentials
-            };
+        //    var tokenDescriptor = new SecurityTokenDescriptor
+        //    {
+        //        Subject = new ClaimsIdentity(claims),
+        //        Issuer = _issuer,
+        //        Expires = DateTime.UtcNow.AddDays(7),
+        //        Audience = _audience,
+        //        SigningCredentials = _signingCredentials
+        //    };
 
-            var token = _tokenHandler.CreateToken(tokenDescriptor);
-            return _tokenHandler.WriteToken(token);
-        }
+        //    var token = _tokenHandler.CreateToken(tokenDescriptor);
+        //    return _tokenHandler.WriteToken(token);
+        //}
 
         public static string HashearComSha256(string dado)
         {

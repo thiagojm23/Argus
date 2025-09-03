@@ -1,13 +1,22 @@
 using System.Text;
 using ArgusCloud.API.Hubs;
+using ArgusCloud.Application.Autenticacao.Handlers;
+using ArgusCloud.Application.Autenticacao.Requisitos;
 using ArgusCloud.Application.Comandos;
 using ArgusCloud.Application.Contratos;
+using ArgusCloud.Application.Interfaces;
+using ArgusCloud.Application.Servicos;
 using ArgusCloud.Domain.Entities;
+using ArgusCloud.Domain.Interfaces.Repositorios;
 using ArgusCloud.Infrastructure.Data;
+using ArgusCloud.Infrastructure.Repositorios;
+using ArgusCloud.Infrastructure.Servicos;
 using Mapster;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models; // adicionada
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,10 +33,42 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 //Repos
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(CadastrarComando).Assembly));
+builder.Services.AddSingleton<IAuthorizationHandler, MaquinaIdHandler>();
+builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
+builder.Services.AddSingleton<ITokenServico, TokenServico>();
+builder.Services.AddSingleton<IProcessoTempoRealServico, InMemoryProcessosTempoRealServico>();
+
+//
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+
+// Swagger / OpenAPI
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "ArgusCloud API", Version = "v1" });
+    // Segurança JWT
+    var securityScheme = new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Description = "Informe o token JWT no formato: Bearer {token}",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        Reference = new OpenApiReference
+        {
+            Type = ReferenceType.SecurityScheme,
+            Id = "Bearer"
+        }
+    };
+    c.AddSecurityDefinition("Bearer", securityScheme);
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        { securityScheme, new List<string>() }
+    });
+});
 
 builder.Services.AddSignalR();
 
@@ -40,7 +81,6 @@ builder.Services.AddCors(options =>
             .AllowAnyHeader()
             .AllowCredentials());
 });
-
 
 var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key não configurado");
 var keyBytes = Encoding.ASCII.GetBytes(jwtKey);
@@ -101,14 +141,21 @@ builder.Services.AddAuthentication(options =>
     //};
 });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("RequisitoMaquinaId", policy =>
+        policy.AddRequirements(new MaquinaIdRequisito()));
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "ArgusCloud API v1");
+        c.DisplayRequestDuration();
+    });
 }
 
 app.UseHttpsRedirection();

@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using ArgusCloud.Application.Comandos;
 using ArgusCloud.Application.Contratos;
+using ArgusCloud.Application.Interfaces;
 using ArgusCloud.Domain.Entities;
 using ArgusCloud.Domain.Interfaces.Repositorios;
 using Mapster;
@@ -13,11 +14,12 @@ namespace ArgusCloud.API.Controllers
     [ApiController]
     [Route("api/ArgusCloud/[controller]")]
     [Authorize]
-    public class UsuarioController(IUsuarioRepositorio usuarioRepositorio, IMediator mediator, ILogger<UsuarioController> logger) : ControllerBase
+    public class UsuarioController(IUsuarioRepositorio usuarioRepositorio, IMediator mediator, ITokenServico tokenServico, ILogger<UsuarioController> logger) : ControllerBase
     {
         private readonly ILogger<UsuarioController> _logger = logger;
         private readonly IMediator _mediator = mediator;
         private readonly IUsuarioRepositorio _usuarioRepositorio = usuarioRepositorio;
+        private readonly ITokenServico _tokenServico = tokenServico;
 
         [HttpPost("atualizarUsuario")]
         public async Task<IActionResult> AtualizarUsuario([FromBody] AtualizarUsuarioContrato contrato)
@@ -36,21 +38,20 @@ namespace ArgusCloud.API.Controllers
             return Ok();
         }
         [HttpPost("logar")]
+        [AllowAnonymous]
         public async Task<ActionResult<UsuarioContrato>> Logar([FromBody] LogarContrato contrato)
         {
             try
             {
-                //Implementar refresh token
-                //Enviar refresh e access token para o front (precisa criar um ep ("refresh") para o front
-                //conseguir gerar outra access token (access token expira em 10 minutos)
-
                 var usuario = await _usuarioRepositorio.ObterPorNomeAsync(contrato.NomeUsuario);
 
                 if (usuario == null) return BadRequest();
 
                 if (!BCrypt.Net.BCrypt.Verify(contrato.Senha, usuario.SenhaHash)) return Unauthorized();
 
-                var usuarioContrato = MapearParaUsuarioContrato(usuario);
+                var token = _tokenServico.GerarTokenFront(usuario.Id, usuario.Nome);
+
+                var usuarioContrato = MapearParaUsuarioContrato(usuario, token);
 
                 return Ok(usuarioContrato);
             }
@@ -62,32 +63,28 @@ namespace ArgusCloud.API.Controllers
             }
         }
 
-        [HttpPost("refreshToken")]
-        public async Task<ActionResult<string>> RefreshToken([FromBody] LogarContrato contrato)
-        {
-            try
-            {
-                //Implementar refresh token
-                //Enviar refresh e access token para o front (precisa criar um ep ("refresh") para o front
-                //conseguir gerar outra access token (access token expira em 10 minutos)
+        //[HttpPost("atualizarToken")]
+        //public async Task<ActionResult<string>> RefreshToken([FromBody] LogarContrato contrato)
+        //{
+        //    try
+        //    {
 
-                var usuario = await _usuarioRepositorio.ObterPorNomeAsync(contrato.NomeUsuario);
+        //        var usuario = await _usuarioRepositorio.ObterPorNomeAsync(contrato.NomeUsuario);
 
-                if (usuario == null) return BadRequest();
+        //        if (usuario == null) return BadRequest();
 
-                if (!BCrypt.Net.BCrypt.Verify(contrato.Senha, usuario.SenhaHash)) return Unauthorized();
+        //        if (!BCrypt.Net.BCrypt.Verify(contrato.Senha, usuario.SenhaHash)) return Unauthorized();
 
-                var usuarioContrato = MapearParaUsuarioContrato(usuario);
 
-                return Ok(usuarioContrato);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Erro ao logar usuário");
-                return BadRequest("Falha ao logar");
+        //        return ;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "Erro ao logar usuário");
+        //        return BadRequest("Falha ao logar");
 
-            }
-        }
+        //    }
+        //}
 
         [HttpPost("cadastrarUsuario")]
         public async Task<ActionResult<AdicionarUsuarioContratoResponse>> CadastrarUsuario([FromBody] AdicionarUsuarioContratoResquest contrato, CancellationToken cancellationToken)
@@ -114,30 +111,30 @@ namespace ArgusCloud.API.Controllers
             }
 
         }
-        [HttpPost("verificarAgente")]
-        public async Task<ActionResult<string>> VerificarAgente([FromBody] AdicionarUsuarioContratoResquest contrato, CancellationToken cancellationToken)
+        [HttpGet("verificarAgente/{maquinaId}")]
+        [Authorize(Policy = "RequisitoMaquinaId")]
+        public async Task<IActionResult> VerificarAgente(string maquinaId)
         {
             try
             {
-                var usuario = await _usuarioRepositorio.ObterPorNomeAsync(contrato.Nome);
-                if (usuario != null && BCrypt.Net.BCrypt.Verify(contrato.Senha, usuario.SenhaHash))
-                {
-                    var comando = new GerarTokenDefinitivoComando(usuario, usuario.SenhaHash);
-                    var usuarioCadastrado = await _mediator.Send(comando, cancellationToken);
-                    return usuarioCadastrado.TokenAgente;
-                }
+                if (!Guid.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var usuarioId))
+                    return Unauthorized();
+
+                var usuario = await _usuarioRepositorio.ObterPorIdAsync(usuarioId);
+                if (usuario != null && Guid.Parse(maquinaId) == usuario.MaquinaId)
+                    return Ok();
 
                 return NotFound();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro ao cadastrar usuário");
+                _logger.LogError(ex, "Erro ao verificar agente com maquinaId: {maquinaId}", maquinaId);
                 return BadRequest();
             }
 
         }
 
-        private static UsuarioContrato MapearParaUsuarioContrato(Usuario usuario)
+        private static UsuarioContrato MapearParaUsuarioContrato(Usuario usuario, string? token = null)
         {
             var maquina = usuario.Maquina != null
             ? new MaquinaContrato
@@ -147,7 +144,7 @@ namespace ArgusCloud.API.Controllers
                 SistemaOperacional = usuario.Maquina.SistemaOperacional,
                 LocalizacaoMaquina = usuario.Maquina.LocalizacaoMaquina
             }
-        : null;
+                : null;
             return new UsuarioContrato
             {
                 Nome = usuario.Nome,
@@ -156,6 +153,7 @@ namespace ArgusCloud.API.Controllers
                 IdUsuario = usuario.Id,
                 Maquina = maquina,
                 PermiteEspelharemProcessos = usuario.PermiteEspelharemProcessos,
+                Token = token
             };
         }
     }
