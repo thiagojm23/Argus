@@ -13,6 +13,7 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "beercss": "^3.11.30",
     "pug": "^3.0.3",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"

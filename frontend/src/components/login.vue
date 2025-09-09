@@ -1,36 +1,9 @@
 <template lang="pug">
-.login
-  .camposParaLogin
-    h5.noMargin Login
-    input(type="text" placeholder="Usuário")
+article.middle.wdt50.center.border.purple-border
+  h5.center-align Login
+  .field.large
+    input(type="email" placeholder="Usuário")
+  .field.large
     input(type="password" placeholder="Senha")
-
+  button.small-round.center.wdt50.large.purple10.white-text CONTINUAR
 </template>
-<style scoped>
-.login {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-.camposParaLogin {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  align-items: center;
-  padding: 24px;
-  border: 2px solid #ccc;
-  border-radius: 8px;
-  background-color: black;
-  width: 40%;
-}
-.noMargin {
-  margin: 0;
-}
-input {
-  width: 100%;
-  padding: 8px;
-  border: none;
-  border-radius: 4px;
-}
-</style>
