@@ -6,7 +6,7 @@ namespace ArgusCloud.Domain.Entities
     {
         public Guid Id { get; set; }
         public required string Nome { get; set; }
-        public DateTime DataExpiracao { get; set; } = DateTime.UtcNow.AddYears(1);
+        public DateTime DataExpiracao { get; set; };
         public bool ExporProcessos { get; set; } = true;
         public Guid? MaquinaId { get; set; }
         public virtual Maquina? Maquina { get; set; }

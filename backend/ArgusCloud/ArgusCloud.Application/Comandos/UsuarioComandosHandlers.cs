@@ -23,26 +23,33 @@ namespace ArgusCloud.Application.Comandos
 
                 novoUsuario = await _usuarioRepositorio.CadastrarUsuarioAsync(novoUsuario);
 
-                var retorno = new AdicionarUsuarioContratoResponse { Nome = novoUsuario.Nome, Senha = request.Senha, TokenAgente = tokenTemporarioAgente };
+                var retorno = new AdicionarUsuarioContratoResponse { Nome = novoUsuario.Nome, Senha = request.Senha, TokenAgente = tokenTemporarioAgente, DataExpiracao = null };
 
                 return retorno;
             }
         }
 
-        public class GerarTokenDefinitivoComandoHandler(IUsuarioRepositorio usuarioRepositorio, ITokenServico tokenServico) : IRequestHandler<GerarTokenDefinitivoComando, AdicionarUsuarioContratoResponse>
+        public class GerarTokenDefinitivoComandoHandler(IUsuarioRepositorio usuarioRepositorio, ITokenServico tokenServico) : IRequestHandler<GerarTokenDefinitivoComando, AdicionarUsuarioContratoResponse?>
         {
             private readonly IUsuarioRepositorio _usuarioRepositorio = usuarioRepositorio;
             private readonly ITokenServico _tokenServico = tokenServico;
 
-            public async Task<AdicionarUsuarioContratoResponse> Handle(GerarTokenDefinitivoComando request, CancellationToken cancellationToken)
+            public async Task<AdicionarUsuarioContratoResponse?> Handle(GerarTokenDefinitivoComando request, CancellationToken cancellationToken)
             {
-                var tokenTemporarioAgente = _tokenServico.GerarTokenDefinitivoAgente(request.Usuario.Id, request.Usuario.MaquinaId!.Value);
+                if (!_tokenServico.ValidarToken(request.TokenTemporario))
+                    return null;
 
-                request.Usuario.TokenAgenteHash = TokenServico.HashearComSha256(tokenTemporarioAgente);
+
+                var maquinaId = Guid.NewGuid();
+                var tokenDefinitivoAgente = _tokenServico.GerarTokenDefinitivoAgente(request.Usuario.Id, maquinaId);
+
+                request.Usuario.TokenAgenteHash = TokenServico.HashearComSha256(tokenDefinitivoAgente);
+                request.Usuario.DataExpiracao = DateTime.Now.AddYears(1);
+                request.Usuario.MaquinaId = maquinaId;
 
                 await _usuarioRepositorio.AtualizarAsync(request.Usuario);
 
-                var retorno = new AdicionarUsuarioContratoResponse { Nome = request.Usuario.Nome, Senha = request.Senha, TokenAgente = request.Usuario.TokenAgenteHash };
+                var retorno = new AdicionarUsuarioContratoResponse { Nome = request.Usuario.Nome, Senha = request.Senha, TokenAgente = tokenDefinitivoAgente, DataExpiracao = request.Usuario.DataExpiracao };
 
                 return retorno;
             }

@@ -87,6 +87,7 @@ namespace ArgusCloud.API.Controllers
         //}
 
         [HttpPost("cadastrarUsuario")]
+        [AllowAnonymous]
         public async Task<ActionResult<AdicionarUsuarioContratoResponse>> CadastrarUsuario([FromBody] AdicionarUsuarioContratoResquest contrato, CancellationToken cancellationToken)
         {
             try
@@ -111,6 +112,7 @@ namespace ArgusCloud.API.Controllers
             }
 
         }
+
         [HttpGet("verificarAgente/{maquinaId}")]
         [Authorize(Policy = "RequisitoMaquinaId")]
         public async Task<IActionResult> VerificarAgente(string maquinaId)
@@ -132,6 +134,37 @@ namespace ArgusCloud.API.Controllers
                 return BadRequest();
             }
 
+        }
+
+        [HttpPost("registrarAgente")]
+        [AllowAnonymous]
+        public async Task<ActionResult<AdicionarUsuarioContratoResponse>> RegistrarUsuario([FromBody] RegistrarUsuarioContrato contrato, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var usuario = await _usuarioRepositorio.ObterPorNomeAsync(contrato.NomeUsuario);
+
+                if (usuario != null && BCrypt.Net.BCrypt.Verify(contrato.Senha, usuario.SenhaHash))
+                {
+                    if (usuario.TokenAgenteHash is not null)
+                        return BadRequest();
+
+                    var comando = new GerarTokenDefinitivoComando(usuario, contrato.Senha, contrato.TokenTemporario);
+                    var usuarioCadastrado = await _mediator.Send(comando, cancellationToken);
+                    if (usuarioCadastrado is null)
+                        return Unauthorized();
+
+                    return usuarioCadastrado;
+                }
+
+                _logger.LogError("Erro ao validar as credenciais do agente: Nome: {nome}, senha: {senha}, token: {token}", contrato.NomeUsuario, contrato.Senha, contrato.TokenTemporario);
+                return Unauthorized();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao registrar agente com credenciais: Nome: {nome}, senha: {senha}, token: {token}", contrato.NomeUsuario, contrato.Senha, contrato.TokenTemporario);
+                return BadRequest();
+            }
         }
 
         private static UsuarioContrato MapearParaUsuarioContrato(Usuario usuario, string? token = null)

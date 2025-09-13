@@ -1,4 +1,6 @@
+using System.ComponentModel;
 using System.Diagnostics;
+using System.IdentityModel.Tokens.Jwt;
 using System.Text.Json;
 using Microsoft.AspNetCore.SignalR.Client;
 
@@ -11,7 +13,7 @@ public class Worker(ILogger<Worker> logger, IConfiguration configuracao) : Backg
     private readonly IConfiguration _configuracao = configuracao;
     private HubConnection? _hubConnection;
     private readonly string? _tokenAutenticacao = GerenciadorCredencial.LerToken();
-
+    public readonly string? _maquinaId = RetornarMaquinaIdUsuarioToken(GerenciadorCredencial.LerToken());
     private readonly Dictionary<int, TimeSpan> _tempoCpuModoUsuario = [];
     private readonly Dictionary<int, TimeSpan> _tempoCpuModoPrivilegiado = [];
     private readonly Dictionary<int, TimeSpan> _tempoCpuTotal = [];
@@ -24,6 +26,11 @@ public class Worker(ILogger<Worker> logger, IConfiguration configuracao) : Backg
             _logger.LogError("Token de autenticação não encontrado. Execute o agente com o parâmetro --register para configurar.");
             return;
         }
+        if (string.IsNullOrWhiteSpace(_maquinaId))
+        {
+            _logger.LogError("Erro ao obter id da maquina");
+            throw new Exception();
+        }
 
         await ConfigurarSignalR(stoppingToken);
 
@@ -35,7 +42,9 @@ public class Worker(ILogger<Worker> logger, IConfiguration configuracao) : Backg
                 {
                     var top20Processos = BuscarTop20ProcessosSistema();
                     _logger.LogInformation("Enviando os {count} processos que mais consomem memória.", top20Processos.Count);
-                    await _hubConnection.InvokeAsync("SendProcessData", top20Processos, stoppingToken);
+                    await _hubConnection.InvokeAsync("AtualizarProcessos", _maquinaId, top20Processos, stoppingToken);
+                    var caminhoArquivo = Path.Combine(GerenciadorCredencial.BuscarCaminhoDados(), "resetar_processos.json");
+                    if (File.Exists(caminhoArquivo)) HabilitarAbrirProcessosAoIniciar();
                 }
                 else
                 {
@@ -54,24 +63,16 @@ public class Worker(ILogger<Worker> logger, IConfiguration configuracao) : Backg
 
     private async Task ConfigurarSignalR(CancellationToken tokenCancelamento)
     {
-        var hubUrl = _configuracao["Backend:SignalRHubUrl"];
-        _hubConnection = new HubConnectionBuilder().WithUrl(hubUrl!, options =>
-        {
-            options.AccessTokenProvider = () => Task.FromResult(_tokenAutenticacao);
-        }).WithAutomaticReconnect().Build();
+        var hubUri = _configuracao["Backend:SignalRHubUrl"];
+        var apiBaseUri = configuracao["Backend:ApiBaseUrl"];
 
-        _hubConnection.On<bool>("RestaurarSessaoAoIniciar", (isEnabled) =>
-        {
-            _logger.LogInformation("Recebido comando para {status} a funcionalidade de reiniciar apps.", isEnabled ? "habilitar" : "desabilitar");
+        if (string.IsNullOrEmpty(hubUri) || string.IsNullOrEmpty(apiBaseUri)) return;
 
-            if (isEnabled)
-                SalvarProcessosAtuaisReinicio();
-            else
-                LimparProcessosSalvos();
-        });
+        var listenersSignalR = new ListenersSignalR(_hubConnection, _tokenAutenticacao!, _logger);
 
         try
         {
+            _hubConnection = await listenersSignalR.RegistrarListeners(hubUri, apiBaseUri, _maquinaId!);
             _logger.LogInformation("Conectando ao SiganlR Hub");
             await _hubConnection.StartAsync(tokenCancelamento);
             _logger.LogInformation("Conectado com sucesso ao SignalR Hub");
@@ -85,26 +86,49 @@ public class Worker(ILogger<Worker> logger, IConfiguration configuracao) : Backg
 
     private List<ProcessoInfo> BuscarTop20ProcessosSistema()
     {
-        var top20Processos = Process.GetProcesses().OrderByDescending(p => p.WorkingSet64).Take(20).ToList();
+        var topProcessos = Process.GetProcesses().OrderByDescending(p => p.WorkingSet64).ToList();
         var processosRetorno = new List<ProcessoInfo>();
         var processosAtuaisIds = new HashSet<int>();
+        var executaveis = new List<string>();
 
-
-        foreach (var processo in top20Processos)
+        var contador = 0;
+        while (processosRetorno.Count < 20)
         {
-            var (usoCpuModoUsuario, usoCpuModoPrivilegiado, usoCpuTotal) = CalcularUsoCpu(processo);
-            processosRetorno.Add(new ProcessoInfo
+            try
             {
-                Id = processo.Id,
-                Nome = processo.ProcessName,
-                NumeroThreads = processo.Threads.Count,
-                MemoriaUsoMB = processo.WorkingSet64 / (1024 * 1024),
-                MemoriaVirtualUsoMB = processo.VirtualMemorySize64 / (1024 * 1024),
-                UsoCpuModoUsuario = usoCpuModoUsuario,
-                UsoCpuModoPrivilegiado = usoCpuModoPrivilegiado,
-                UsoCpuTotal = usoCpuTotal
-            });
-            processosAtuaisIds.Add(processo.Id);
+                var (usoCpuModoUsuario, usoCpuModoPrivilegiado, usoCpuTotal) = CalcularUsoCpu(topProcessos[contador]);
+                var processoAtual = new ProcessoInfoBase
+                {
+                    Id = topProcessos[contador].Id,
+                    Nome = RetornarNomeProcesso(topProcessos[contador]),
+                    NomeExecutavel = topProcessos[contador].MainModule?.FileName ?? "desconhecido",
+                    NumeroThreads = topProcessos[contador].Threads.Count,
+                    MemoriaUsoMB = topProcessos[contador].WorkingSet64 / (1024 * 1024),
+                    MemoriaVirtualUsoMB = topProcessos[contador].VirtualMemorySize64 / (1024 * 1024),
+                    UsoCpuModoUsuario = usoCpuModoUsuario,
+                    UsoCpuModoPrivilegiado = usoCpuModoPrivilegiado,
+                    UsoCpuTotal = usoCpuTotal
+                };
+                if (!executaveis.Contains(processoAtual.NomeExecutavel))
+                {
+                    executaveis.Add(processoAtual.NomeExecutavel);
+                    processosAtuaisIds.Add(processoAtual.Id);
+                    processosRetorno.Add(MapearParaProcesso(processoAtual));
+                }
+                else
+                {
+                    ProcessoInfo processoJaListado = processosRetorno.Find(processo => processo.NomeExecutavel == processoAtual.NomeExecutavel)!;
+                    processoJaListado.SubProcessos.Add(processoAtual);
+                }
+            }
+            catch (Win32Exception ex)
+            {
+                continue;
+            }
+            finally
+            {
+                contador++;
+            }
         }
 
         LimparProcessosAntigos(processosAtuaisIds);
@@ -152,19 +176,12 @@ public class Worker(ILogger<Worker> logger, IConfiguration configuracao) : Backg
 
     }
 
-    private static void SalvarProcessosAtuaisReinicio()
+    private static void HabilitarAbrirProcessosAoIniciar()
     {
         var processos = Process.GetProcesses().Select(p => new { p.ProcessName, p.MainModule?.FileName }).Where(p => !string.IsNullOrEmpty(p.FileName)).ToList();
 
         var json = JsonSerializer.Serialize(processos);
         File.WriteAllText(Path.Combine(GerenciadorCredencial.BuscarCaminhoDados(), "resetar_processos.json"), json);
-    }
-
-    private static void LimparProcessosSalvos()
-    {
-        var caminhoArquivo = Path.Combine(GerenciadorCredencial.BuscarCaminhoDados(), "resetar_processos.json");
-        if (File.Exists(caminhoArquivo))
-            File.Delete(caminhoArquivo);
     }
 
     private void LimparProcessosAntigos(HashSet<int> processosAtuaisIds)
@@ -181,5 +198,61 @@ public class Worker(ILogger<Worker> logger, IConfiguration configuracao) : Backg
                 _ultimoTempoLido.Remove(id);
             }
         }
+    }
+
+    private static string RetornarNomeProcesso(Process processo)
+    {
+        if (processo.MainModule == null)
+            return processo.ProcessName;
+
+        FileVersionInfo info = processo.MainModule.FileVersionInfo;
+
+        if (!string.IsNullOrEmpty(processo.MainWindowTitle))
+            return processo.MainWindowTitle;
+        // A 'FileDescription' é geralmente a mais precisa.
+        else if (!string.IsNullOrEmpty(info.FileDescription))
+            return info.FileDescription;
+        // Se não houver descrição, o 'ProductName' é uma ótima alternativa.
+        else if (!string.IsNullOrEmpty(info.ProductName))
+            return info.ProductName;
+
+        return processo.ProcessName;
+    }
+
+    private static string? RetornarMaquinaIdUsuarioToken(string? token)
+    {
+        if (token == null) return string.Empty;
+        try
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var jwt = handler.ReadJwtToken(token);
+
+            var claim = jwt.Claims.FirstOrDefault(c =>
+                    c.Type == "maquinaId");
+
+            return claim?.Value ?? string.Empty;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+            return string.Empty;
+        }
+    }
+
+    private static ProcessoInfo MapearParaProcesso(ProcessoInfoBase processoBase)
+    {
+        return new ProcessoInfo
+        {
+            Id = processoBase.Id,
+            Nome = processoBase.Nome,
+            NomeExecutavel = processoBase.NomeExecutavel,
+            NumeroThreads = processoBase.NumeroThreads,
+            MemoriaUsoMB = processoBase.MemoriaUsoMB,
+            MemoriaVirtualUsoMB = processoBase.MemoriaVirtualUsoMB,
+            UsoCpuModoUsuario = processoBase.UsoCpuModoUsuario,
+            UsoCpuModoPrivilegiado = processoBase.UsoCpuModoPrivilegiado,
+            UsoCpuTotal = processoBase.UsoCpuTotal,
+            SubProcessos = []
+        };
     }
 }

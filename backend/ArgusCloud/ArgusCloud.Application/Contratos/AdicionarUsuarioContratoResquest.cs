@@ -19,6 +19,5 @@ namespace ArgusCloud.Application.Contratos
             get => _senha!;
             set => _senha = value?.Trim();
         }
-        public string? TokenTemporario { get; set; }
     }
 }

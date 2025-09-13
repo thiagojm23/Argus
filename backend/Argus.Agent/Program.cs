@@ -3,7 +3,11 @@ using System.Net.Http.Json;
 using System.ServiceProcess;
 using Argus.Agent;
 
-var builder = Host.CreateApplicationBuilder(args);
+IHostBuilder builder = Host.CreateDefaultBuilder(args);
+builder.ConfigureServices(services =>
+{
+    services.AddHostedService<Worker>();
+});
 
 if (args.Contains("--register"))
 {
@@ -16,8 +20,6 @@ if (args.Contains("--uninstall"))
     return;
 }
 
-builder.Services.AddHostedService<Worker>();
-
 var host = builder.Build();
 host.Run();
 
@@ -28,10 +30,13 @@ static async Task RegistrarAgenteAsync()
     Console.WriteLine("Digite seu nome de usuário: ");
     string? nomeUsuario = Console.ReadLine();
 
-    Console.WriteLine("Digite seu token de acesso");
-    string? token = Console.ReadLine();
+    Console.WriteLine("Digite sua senha de acesso");
+    string? senha = Console.ReadLine();
 
-    if (string.IsNullOrWhiteSpace(nomeUsuario) || string.IsNullOrWhiteSpace(token))
+    Console.WriteLine("Digite seu token temporário de acesso");
+    string? tokenTemporario = Console.ReadLine();
+
+    if (string.IsNullOrWhiteSpace(nomeUsuario) || string.IsNullOrWhiteSpace(tokenTemporario))
     {
         Console.ForegroundColor = ConsoleColor.Red;
         Console.WriteLine("Usuário e senha não podem ser vazios");
@@ -46,16 +51,17 @@ static async Task RegistrarAgenteAsync()
     try
     {
         Console.WriteLine("\nValidando credenciais");
-        var response = await cliente.PostAsJsonAsync($"{apiBaseUrl}/api/auth/login-agent", new { nomeUsuario, token });
+        Console.WriteLine($"{apiBaseUrl}/Usuario/registrarAgente");
+        var response = await cliente.PostAsJsonAsync($"{apiBaseUrl}/Usuario/registrarAgente", new { nomeUsuario, tokenTemporario, senha });
 
         if (response.IsSuccessStatusCode)
         {
             var authResult = await response.Content.ReadFromJsonAsync<AutenticacaoContrato>();
-            if (authResult?.Token is not null)
+            if (authResult?.TokenAgente is not null)
             {
-                GerenciadorCredencial.SalvarToken(authResult.Token);
+                GerenciadorCredencial.SalvarToken(authResult.TokenAgente);
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine($"\nCerto {authResult.NomeUsuario} seu agente foi registrado com sucesso");
+                Console.WriteLine($"\nCerto {authResult.NomeUsuario}, seu agente foi registrado com sucesso");
                 Console.ForegroundColor = ConsoleColor.Cyan;
                 Console.WriteLine($"Seu token expira em: {authResult.DataExpiracao:dd/MM/yyyy}");
                 Console.ForegroundColor = ConsoleColor.Green;

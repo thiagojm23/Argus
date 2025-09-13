@@ -2,12 +2,14 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Logging;
 
 namespace ArgusCloud.Application.Autenticacao.Handlers
 {
-    public class MaquinaIdHandler(IHttpContextAccessor httpContextAccessor) : AuthorizationHandler<MaquinaIdRequisito>
+    public class MaquinaIdHandler(IHttpContextAccessor httpContextAccessor, ILogger<MaquinaIdHandler> logger) : AuthorizationHandler<MaquinaIdRequisito>
     {
         private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
+        private readonly ILogger _logger = logger;
         protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, MaquinaIdRequisito requirement)
         {
             var httpContext = _httpContextAccessor.HttpContext;
@@ -16,9 +18,10 @@ namespace ArgusCloud.Application.Autenticacao.Handlers
                 context.Fail();
                 return Task.CompletedTask;
             }
-            var calimMaquinaId = context.User.FindFirst("maquinaId")?.Value;
-            if (calimMaquinaId == null)
+            var claimMaquinaId = context.User.FindFirst("maquinaId")?.Value;
+            if (claimMaquinaId == null)
             {
+                _logger.LogError("Falha ao acessar claim maquinaId");
                 context.Fail();
                 return Task.CompletedTask;
             }
@@ -28,11 +31,16 @@ namespace ArgusCloud.Application.Autenticacao.Handlers
             var requisicaoMaquinaId = rotaMaquinaId ?? httpContext.Request.Query["maquinaId"].ToString();
             if (string.IsNullOrWhiteSpace(requisicaoMaquinaId))
             {
+                _logger.LogError("Erro ao pegar maquinadId da requisição");
                 context.Fail();
                 return Task.CompletedTask;
             }
 
-            if (requisicaoMaquinaId.Equals(rotaMaquinaId)) context.Succeed(requirement);
+            if (requisicaoMaquinaId.Equals(claimMaquinaId))
+            {
+                _logger.LogInformation("Caindo --------------");
+                context.Succeed(requirement);
+            }
             else context.Fail();
 
             return Task.CompletedTask;

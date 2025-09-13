@@ -2,7 +2,7 @@
 
 namespace ArgusCloud.Application.Contratos
 {
-    public class ProcessoContrato
+    public class ProcessoContratoBase
     {
         [Required(ErrorMessage = "Id obrigatório")]
         public int Id { get; set; }
@@ -14,5 +14,10 @@ namespace ArgusCloud.Application.Contratos
         public double UsoCpuModoUsuario { get; set; }
         public double UsoCpuModoPrivilegiado { get; set; }
         public double UsoCpuTotal { get; set; }
+    }
+
+    public class ProcessoContrato : ProcessoContratoBase
+    {
+        public required List<ProcessoContratoBase> SubProcessos { get; set; }
     }
 }
