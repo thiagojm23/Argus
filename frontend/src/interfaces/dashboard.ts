@@ -8,4 +8,5 @@ export interface IProcessos {
   usoCpuModoUsuario: number
   usoCpuModoPrivilegiado: number
   usoCpuTotal: number
+  subProcessos: Omit<IProcessos, 'subProcessos'>[]
 }

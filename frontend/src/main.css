@@ -1,3 +1,13 @@
+body.light {
+  --scrollbar-track-bg: #f7f2f7;
+  --scrollbar-thumb-bg: #b3b3b3;
+}
+
+body.dark {
+  --scrollbar-track-bg: #1c1b1e;
+  --scrollbar-thumb-bg: #492450;
+}
+
 #app main {
   .wdt50 {
     width: 50%;
@@ -15,12 +25,6 @@
     block-size: inherit !important;
   }
   .scroll {
-    border-top: 1px solid #1c1b1e;
-  }
-  .scroll {
-    --scrollbar-track-bg: #2d2d2d;
-    --scrollbar-thumb-bg: #8e8e8e;
-
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar-thumb-bg) var(--scrollbar-track-bg);
   }

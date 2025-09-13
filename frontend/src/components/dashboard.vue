@@ -11,13 +11,13 @@ header.absolute.wdt100
         span.small-text NOTEBOOK-THIAGO
       label.switch.icon
         p.small-margin.right-margin.large-text Exibir processos para todos
-        input(type="checkbox")
+        input(type="checkbox" v-model="dadosUsuario.exporProcessos")
         span
           i visibility
       .space
-      label.switch.icon
+      label.switch.icon(:class="{ 'medium-opacity': !dadosUsuario.exporProcessos }")
         p.small-margin.right-margin.large-text Permitir espelharem seus processos
-        input(type="checkbox")
+        input(type="checkbox" v-model="dadosUsuario.permiteEspelharemProcessos" :disabled="!dadosUsuario.exporProcessos")
         span
           i screen_share
   article.hg60.large-padding.border.purple-border
@@ -38,14 +38,37 @@ header.absolute.wdt100
 ModalDetalhes(ref="modalDetalhes")
 </template>
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import dadosDashboard from '../dadosDashboard'
 import { type IProcessos } from '../interfaces/dashboard'
 import ModalDetalhes from './modalDetalhes.vue'
+import dadosUsuario from '../dadosUsuario'
+import utils from '../utils'
 
 const modalDetalhes = ref<InstanceType<typeof ModalDetalhes>>()
 
 const temporary = <IProcessos[]>dadosDashboard
+
+const exibirProcessosDebounce = utils.debounce(() => {
+  console.log('Chamada API exibir processos', dadosUsuario.exporProcessos)
+}, 3000)
+const espelharProcessosDebounce = utils.debounce(() => {
+  console.log('Chamada API espelhar processos', dadosUsuario.permiteEspelharemProcessos)
+}, 3000)
+
+watch(
+  () => dadosUsuario.exporProcessos,
+  (valor) => {
+    if (!valor) dadosUsuario.permiteEspelharemProcessos = false
+    exibirProcessosDebounce()
+  },
+)
+watch(
+  () => dadosUsuario.permiteEspelharemProcessos,
+  () => {
+    espelharProcessosDebounce()
+  },
+)
 
 function concatProcesses(processes: IProcessos[]): string {
   return processes
