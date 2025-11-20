@@ -28,15 +28,19 @@ namespace ArgusCloud.Infrastructure.Repositorios
         {
             return await _dbSet.FindAsync(id);
         }
+        public async Task<Usuario?> ObterPorMaquinaIdAsync(Guid maquinaId)
+        {
+            return await _dbSet.Include(usuario => usuario.Maquina).FirstOrDefaultAsync(usuario => usuario.MaquinaId == maquinaId);
+        }
 
         public async Task<Usuario?> ObterPorNomeAsync(string nome)
         {
-            return await _dbSet.FirstOrDefaultAsync(usuario => usuario.Nome == nome);
+            return await _dbSet.Include(usuario => usuario.Maquina).FirstOrDefaultAsync(usuario => usuario.Nome.Equals(nome, StringComparison.Ordinal));
         }
 
         public async Task<Usuario?> ObterPorNomeESenhaAsync(string nome, string senhaHash)
         {
-            return await _dbSet.FirstOrDefaultAsync(usuario => usuario.Nome == nome && usuario.SenhaHash == senhaHash);
+            return await _dbSet.Include(usuario => usuario.Maquina).FirstOrDefaultAsync(usuario => usuario.Nome == nome && usuario.SenhaHash == senhaHash);
         }
     }
 }

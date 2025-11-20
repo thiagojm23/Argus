@@ -1,5 +1,7 @@
 import { reactive } from 'vue'
-import { type IProcessos } from './interfaces/dashboard'
-import dadosTeste from './dadosTeste'
+import { type IProcesso } from './interfaces/dashboard'
 
-export default reactive<IProcessos[]>(dadosTeste)
+export default reactive({
+  top4Processos: [] as string[],
+  processosDetalhados: [] as IProcesso[],
+})

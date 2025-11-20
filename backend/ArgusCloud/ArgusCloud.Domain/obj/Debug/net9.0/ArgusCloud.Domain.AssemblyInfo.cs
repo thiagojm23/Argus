@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ArgusCloud.Domain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8259699cbbfb8ff38134cadca94ec30f1f29fc99")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3bcfc76e5330215e808826feae155f767c0c1cae")]
 [assembly: System.Reflection.AssemblyProductAttribute("ArgusCloud.Domain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ArgusCloud.Domain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

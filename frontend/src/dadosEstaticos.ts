@@ -11,13 +11,40 @@ export type Processo = {
 }
 
 export const LABELS_PROCESSES = {
-  id: 'PID',
-  nome: 'Nome',
-  nomeExecutavel: 'Executável',
-  memoriaUsoMB: 'Uso de memória RAM (MB)',
-  memoriaVirtualUsoMB: 'Uso de memória virtual (MB)',
-  numeroThreads: 'Threads',
-  usoCpuModoUsuario: 'CPU (modo usuário)',
-  usoCpuModoPrivilegiado: 'CPU (modo privilegiado)',
-  usoCpuTotal: 'CPU (total)',
+  id: {
+    label: 'PID',
+    complemento: '',
+  },
+  nome: {
+    label: 'Nome',
+    complemento: '',
+  },
+  nomeExecutavel: {
+    label: 'Executável',
+    complemento: '',
+  },
+  memoriaUsoMB: {
+    label: 'Uso de memória RAM',
+    complemento: 'MB',
+  },
+  memoriaVirtualUsoMB: {
+    label: 'Uso de memória virtual',
+    complemento: 'MB',
+  },
+  numeroThreads: {
+    label: 'Threads',
+    complemento: '',
+  },
+  usoCpuModoUsuario: {
+    label: 'CPU (modo usuário)',
+    complemento: '%',
+  },
+  usoCpuModoPrivilegiado: {
+    label: 'CPU (modo privilegiado)',
+    complemento: '%',
+  },
+  usoCpuTotal: {
+    label: 'CPU (total)',
+    complemento: '%',
+  },
 } as const

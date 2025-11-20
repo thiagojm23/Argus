@@ -14,9 +14,10 @@ using ArgusCloud.Infrastructure.Servicos;
 using Mapster;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models; // adicionada
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,14 +30,18 @@ TypeAdapterConfig<UsuarioContrato, Usuario>
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString),
+    mySqlOptions => mySqlOptions.EnableStringComparisonTranslations()));
 
 //Repos
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(CadastrarComando).Assembly));
 builder.Services.AddSingleton<IAuthorizationHandler, MaquinaIdHandler>();
 builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
+builder.Services.AddScoped<IMaquinaRepositorio, MaquinaRepositorio>();
 builder.Services.AddSingleton<ITokenServico, TokenServico>();
 builder.Services.AddSingleton<IProcessoTempoRealServico, InMemoryProcessosTempoRealServico>();
+builder.Services.AddSingleton<IUserIdProvider, MaquinaIdSignalR>();
+builder.Services.AddSingleton<IGerenciadorGruposServico, GerenciadorGruposServico>();
 
 //
 builder.Services.AddHttpContextAccessor();
@@ -109,12 +114,18 @@ builder.Services.AddAuthentication(options =>
     {
         OnMessageReceived = context =>
         {
-            var token = context.Request.Query["access_token"];
-            var path = context.HttpContext.Request.Path;
-            if (!string.IsNullOrEmpty(token) && path.StartsWithSegments("/argus"))
+            if (context.Request.Cookies.TryGetValue("cookie-signal-r", out var token))
             {
                 context.Token = token;
             }
+
+            //var tokenHeader = context.Request.Query["access_token"];
+            //var path = context.HttpContext.Request.Path;
+            //if (!string.IsNullOrEmpty(tokenHeader) && path.StartsWithSegments("/argus"))
+            //{
+            //    context.Token = tokenHeader;
+            //}
+
             return Task.CompletedTask;
         }
     };

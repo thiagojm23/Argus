@@ -1,4 +1,4 @@
-export interface IProcessos {
+export interface IProcesso {
   id: number
   nome: string
   nomeExecutavel: string
@@ -8,5 +8,5 @@ export interface IProcessos {
   usoCpuModoUsuario: number
   usoCpuModoPrivilegiado: number
   usoCpuTotal: number
-  subProcessos: Omit<IProcessos, 'subProcessos'>[]
+  subProcessos: Omit<IProcesso, 'subProcessos'>[]
 }

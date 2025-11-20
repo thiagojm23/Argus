@@ -38,7 +38,6 @@ namespace ArgusCloud.Application.Autenticacao.Handlers
 
             if (requisicaoMaquinaId.Equals(claimMaquinaId))
             {
-                _logger.LogInformation("Caindo --------------");
                 context.Succeed(requirement);
             }
             else context.Fail();

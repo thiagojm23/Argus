@@ -110,13 +110,13 @@ namespace ArgusCloud.Application.Servicos
         //    return _tokenHandler.WriteToken(token);
         //}
 
-        public string GerarTokenFront(Guid usuarioId, string nomeUsuario)
+        public string GerarTokenFront(Guid usuarioId, Guid maquinaId)
         {
             var claims = new List<Claim>
             {
                 new(ClaimTypes.NameIdentifier, usuarioId.ToString()),
-                new(ClaimTypes.Name, nomeUsuario),
-                new("tipoCliente", "front")
+                new("tipoCliente", "front"),
+                new("maquinaId", maquinaId.ToString())
             };
 
             var tokenDescriptor = new SecurityTokenDescriptor

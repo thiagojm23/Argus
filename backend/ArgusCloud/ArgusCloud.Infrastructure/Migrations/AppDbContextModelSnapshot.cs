@@ -62,9 +62,6 @@ namespace ArgusCloud.Infrastructure.Migrations
                     b.Property<Guid?>("MaquinaId")
                         .HasColumnType("char(36)");
 
-                    b.Property<Guid?>("MaquinaId1")
-                        .HasColumnType("char(36)");
-
                     b.Property<string>("Nome")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -84,7 +81,7 @@ namespace ArgusCloud.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("MaquinaId1");
+                    b.HasIndex("MaquinaId");
 
                     b.ToTable("Usuarios");
                 });
@@ -93,7 +90,7 @@ namespace ArgusCloud.Infrastructure.Migrations
                 {
                     b.HasOne("Argus.Agent.Maquina", "Maquina")
                         .WithMany()
-                        .HasForeignKey("MaquinaId1");
+                        .HasForeignKey("MaquinaId");
 
                     b.Navigation("Maquina");
                 });

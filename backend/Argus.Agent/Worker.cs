@@ -13,11 +13,16 @@ public class Worker(ILogger<Worker> logger, IConfiguration configuracao) : Backg
     private readonly IConfiguration _configuracao = configuracao;
     private HubConnection? _hubConnection;
     private readonly string? _tokenAutenticacao = GerenciadorCredencial.LerToken();
-    public readonly string? _maquinaId = RetornarMaquinaIdUsuarioToken(GerenciadorCredencial.LerToken());
+    private readonly string? _maquinaId = RetornarMaquinaIdUsuarioToken(GerenciadorCredencial.LerToken());
     private readonly Dictionary<int, TimeSpan> _tempoCpuModoUsuario = [];
     private readonly Dictionary<int, TimeSpan> _tempoCpuModoPrivilegiado = [];
     private readonly Dictionary<int, TimeSpan> _tempoCpuTotal = [];
     private readonly Dictionary<int, DateTime> _ultimoTempoLido = [];
+
+    private static List<string> top4Processos = [];
+    public static bool processosVisiveisParaRede = false;
+    public static bool enviarProcessosDetalhados = false;
+    public static bool novoObservadorAdicionado = true;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -40,11 +45,22 @@ public class Worker(ILogger<Worker> logger, IConfiguration configuracao) : Backg
             {
                 if (_hubConnection?.State == HubConnectionState.Connected)
                 {
-                    var top20Processos = BuscarTop20ProcessosSistema();
-                    _logger.LogInformation("Enviando os {count} processos que mais consomem memória.", top20Processos.Count);
-                    await _hubConnection.InvokeAsync("AtualizarProcessos", _maquinaId, top20Processos, stoppingToken);
-                    var caminhoArquivo = Path.Combine(GerenciadorCredencial.BuscarCaminhoDados(), "resetar_processos.json");
-                    if (File.Exists(caminhoArquivo)) HabilitarAbrirProcessosAoIniciar();
+                    if (processosVisiveisParaRede)
+                    {
+                        var top20Processos = BuscarTop20ProcessosSistema();
+
+                        await EnviarProcessosDashboard(top20Processos, stoppingToken);
+
+                        if (enviarProcessosDetalhados)
+                        {
+                            Console.WriteLine("Caiu aqui");
+                            await EnviarProcessosDetalhados(top20Processos, stoppingToken);
+                        }
+
+                        var caminhoArquivo = Path.Combine(GerenciadorCredencial.BuscarCaminhoDados(), "resetar_processos.json");
+                        if (File.Exists(caminhoArquivo)) HabilitarAbrirProcessosAoIniciar();
+
+                    }
                 }
                 else
                 {
@@ -57,14 +73,14 @@ public class Worker(ILogger<Worker> logger, IConfiguration configuracao) : Backg
                 _logger.LogError(ex, "Ocorreu um erro ao enviar os dados dos processos.");
                 return;
             }
-            await Task.Delay(1000, stoppingToken);
+            await Task.Delay(500, stoppingToken);
         }
     }
 
     private async Task ConfigurarSignalR(CancellationToken tokenCancelamento)
     {
         var hubUri = _configuracao["Backend:SignalRHubUrl"];
-        var apiBaseUri = configuracao["Backend:ApiBaseUrl"];
+        var apiBaseUri = _configuracao["Backend:ApiBaseUrl"];
 
         if (string.IsNullOrEmpty(hubUri) || string.IsNullOrEmpty(apiBaseUri)) return;
 
@@ -87,41 +103,63 @@ public class Worker(ILogger<Worker> logger, IConfiguration configuracao) : Backg
     private List<ProcessoInfo> BuscarTop20ProcessosSistema()
     {
         var topProcessos = Process.GetProcesses().OrderByDescending(p => p.WorkingSet64).ToList();
-        var processosRetorno = new List<ProcessoInfo>();
+        var processosAgrupados = new Dictionary<string, ProcessoInfo>();
+
         var processosAtuaisIds = new HashSet<int>();
-        var executaveis = new List<string>();
 
         var contador = 0;
-        while (processosRetorno.Count < 20)
+        while (processosAgrupados.Count < 20)
         {
             try
             {
-                var (usoCpuModoUsuario, usoCpuModoPrivilegiado, usoCpuTotal) = CalcularUsoCpu(topProcessos[contador]);
-                var processoAtual = new ProcessoInfoBase
+                string nomeExecutavel = topProcessos[contador].MainModule?.FileName ?? "desconhecido";
+
+                if (processosAgrupados.TryGetValue(nomeExecutavel, out ProcessoInfo? processoJaListado))
                 {
-                    Id = topProcessos[contador].Id,
-                    Nome = RetornarNomeProcesso(topProcessos[contador]),
-                    NomeExecutavel = topProcessos[contador].MainModule?.FileName ?? "desconhecido",
-                    NumeroThreads = topProcessos[contador].Threads.Count,
-                    MemoriaUsoMB = topProcessos[contador].WorkingSet64 / (1024 * 1024),
-                    MemoriaVirtualUsoMB = topProcessos[contador].VirtualMemorySize64 / (1024 * 1024),
-                    UsoCpuModoUsuario = usoCpuModoUsuario,
-                    UsoCpuModoPrivilegiado = usoCpuModoPrivilegiado,
-                    UsoCpuTotal = usoCpuTotal
-                };
-                if (!executaveis.Contains(processoAtual.NomeExecutavel))
-                {
-                    executaveis.Add(processoAtual.NomeExecutavel);
-                    processosAtuaisIds.Add(processoAtual.Id);
-                    processosRetorno.Add(MapearParaProcesso(processoAtual));
+                    var (usoCpuModoUsuario, usoCpuModoPrivilegiado, usoCpuTotal) = CalcularUsoCpu(topProcessos[contador]);
+
+                    processoJaListado.SubProcessos.Add(new ProcessoInfoBase
+                    {
+                        Id = topProcessos[contador].Id,
+                        Nome = RetornarNomeProcesso(topProcessos[contador]),
+                        NomeExecutavel = nomeExecutavel,
+                        NumeroThreads = topProcessos[contador].Threads.Count,
+                        MemoriaUsoMB = topProcessos[contador].WorkingSet64 / (1024 * 1024),
+                        MemoriaVirtualUsoMB = topProcessos[contador].VirtualMemorySize64 / (1024 * 1024),
+                        UsoCpuModoUsuario = usoCpuModoUsuario,
+                        UsoCpuModoPrivilegiado = usoCpuModoPrivilegiado,
+                        UsoCpuTotal = usoCpuTotal
+                    });
+
+                    processoJaListado.MemoriaUsoMB += topProcessos[contador].WorkingSet64 / (1024 * 1024);
+                    processoJaListado.NumeroThreads += topProcessos[contador].Threads.Count;
+                    processoJaListado.UsoCpuModoPrivilegiado += usoCpuModoPrivilegiado;
+                    processoJaListado.MemoriaVirtualUsoMB += topProcessos[contador].VirtualMemorySize64 / (1024 * 1024);
+                    processoJaListado.UsoCpuModoUsuario += usoCpuModoUsuario;
+                    processoJaListado.UsoCpuTotal += usoCpuTotal;
                 }
                 else
                 {
-                    ProcessoInfo processoJaListado = processosRetorno.Find(processo => processo.NomeExecutavel == processoAtual.NomeExecutavel)!;
-                    processoJaListado.SubProcessos.Add(processoAtual);
+                    processosAtuaisIds.Add(topProcessos[contador].Id);
+
+                    var (usoCpuModoUsuario, usoCpuModoPrivilegiado, usoCpuTotal) = CalcularUsoCpu(topProcessos[contador]);
+
+                    processosAgrupados[nomeExecutavel] = new ProcessoInfo
+                    {
+                        Id = topProcessos[contador].Id,
+                        Nome = RetornarNomeProcesso(topProcessos[contador]),
+                        NomeExecutavel = nomeExecutavel,
+                        NumeroThreads = topProcessos[contador].Threads.Count,
+                        MemoriaUsoMB = topProcessos[contador].WorkingSet64 / (1024 * 1024),
+                        MemoriaVirtualUsoMB = topProcessos[contador].VirtualMemorySize64 / (1024 * 1024),
+                        UsoCpuModoUsuario = usoCpuModoUsuario,
+                        UsoCpuModoPrivilegiado = usoCpuModoPrivilegiado,
+                        UsoCpuTotal = usoCpuTotal,
+                        SubProcessos = [],
+                    };
                 }
             }
-            catch (Win32Exception ex)
+            catch (Win32Exception)
             {
                 continue;
             }
@@ -133,46 +171,71 @@ public class Worker(ILogger<Worker> logger, IConfiguration configuracao) : Backg
 
         LimparProcessosAntigos(processosAtuaisIds);
 
-        return processosRetorno;
+        return [.. processosAgrupados.Values.OrderByDescending(processo => processo.MemoriaUsoMB)];
+    }
+    private async Task EnviarProcessosDashboard(List<ProcessoInfo> top20Processos, CancellationToken cancellationToken)
+    {
+        var novos4Processos = top20Processos.Select(processo => processo.Nome).Take(4).ToList();
+        if (novoObservadorAdicionado || !novos4Processos.SequenceEqual(top4Processos))
+        {
+            top4Processos = novos4Processos;
+            await _hubConnection!.InvokeAsync("AtualizarProcessosDash", novos4Processos, cancellationToken);
+        }
+        novoObservadorAdicionado = false;
+    }
+    private async Task EnviarProcessosDetalhados(List<ProcessoInfo> top20Processos, CancellationToken cancellationToken)
+    {
+        await _hubConnection!.InvokeAsync("AtualizarProcessosDetalhados", top20Processos, cancellationToken);
     }
 
     private (double modoUsuario, double modoPrivilegiado, double usoTotal) CalcularUsoCpu(Process processo)
     {
-        var tempoAtual = DateTime.UtcNow;
-        var tempoAtualCpuModoUsuario = processo.UserProcessorTime;
-        var tempoAtualCpuModoPrivilegiado = processo.PrivilegedProcessorTime;
-        var tempoAtualTotalCpu = processo.TotalProcessorTime;
-
-        if (!_ultimoTempoLido.TryGetValue(processo.Id, out var tempoAnterior))
+        try
         {
-            _ultimoTempoLido[processo.Id] = tempoAtual;
-            _tempoCpuModoUsuario[processo.Id] = tempoAtualCpuModoUsuario;
+
+            var tempoAtual = DateTime.UtcNow;
+            var tempoAtualCpuModoUsuario = processo.UserProcessorTime;
+            var tempoAtualCpuModoPrivilegiado = processo.PrivilegedProcessorTime;
+            var tempoAtualTotalCpu = processo.TotalProcessorTime;
+
+            if (!_ultimoTempoLido.TryGetValue(processo.Id, out var tempoAnterior))
+            {
+                _ultimoTempoLido[processo.Id] = tempoAtual;
+                _tempoCpuModoUsuario[processo.Id] = tempoAtualCpuModoUsuario;
+                _tempoCpuModoPrivilegiado[processo.Id] = tempoAtualCpuModoPrivilegiado;
+                _tempoCpuTotal[processo.Id] = tempoAtualTotalCpu;
+
+                return (0, 0, 0);
+            }
+
+            var tempoDecorrido = 0.5;
+
+            var cpuModoUsuarioTempoDecorrido = (tempoAtualCpuModoUsuario - _tempoCpuModoUsuario[processo.Id]).TotalSeconds;
+
+            var cpuModoPrivilegiadoTempoDecorrido = (tempoAtualCpuModoPrivilegiado - _tempoCpuModoPrivilegiado[processo.Id]).TotalSeconds;
+
+            var cpuTotalTempoDecorrido = (tempoAtualTotalCpu - _tempoCpuTotal[processo.Id]).TotalSeconds;
+
             _tempoCpuModoPrivilegiado[processo.Id] = tempoAtualCpuModoPrivilegiado;
+            _tempoCpuModoUsuario[processo.Id] = tempoAtualCpuModoUsuario;
             _tempoCpuTotal[processo.Id] = tempoAtualTotalCpu;
+
+            if (cpuTotalTempoDecorrido > 0)
+            {
+                var usoCpuModoPrivilegiado = Math.Round((cpuModoPrivilegiadoTempoDecorrido / tempoDecorrido) / Environment.ProcessorCount * 100, 2);
+                var usoCpuModoUsuario = Math.Round((cpuModoUsuarioTempoDecorrido / tempoDecorrido) / Environment.ProcessorCount * 100, 2);
+                var usoCpuTotal = Math.Round((cpuTotalTempoDecorrido / tempoDecorrido) / Environment.ProcessorCount * 100, 2);
+
+                return (usoCpuModoPrivilegiado, usoCpuModoUsuario, usoCpuTotal);
+
+            }
 
             return (0, 0, 0);
         }
-
-        var tempoDecorrido = (tempoAtual - tempoAnterior).TotalSeconds;
-        var cpuModoUsuarioTempoDecorrido = (tempoAtualCpuModoUsuario - _tempoCpuModoUsuario[processo.Id]).TotalSeconds;
-        var cpuModoPrivilegiadoTempoDecorrido = (tempoAtualCpuModoPrivilegiado - _tempoCpuModoPrivilegiado[processo.Id]).TotalSeconds;
-        var cpuTotalTempoDecorrido = (tempoAtualTotalCpu - _tempoCpuTotal[processo.Id]).TotalSeconds;
-
-        _tempoCpuModoPrivilegiado[processo.Id] = tempoAtualCpuModoPrivilegiado;
-        _tempoCpuModoUsuario[processo.Id] = tempoAtualCpuModoUsuario;
-        _tempoCpuTotal[processo.Id] = tempoAtualTotalCpu;
-
-        if (cpuTotalTempoDecorrido > 0)
+        catch (Exception)
         {
-            var usoCpuModoPrivilegiado = Math.Round((cpuModoPrivilegiadoTempoDecorrido / tempoDecorrido) / Environment.ProcessorCount * 100, 2);
-            var usoCpuModoUsuario = Math.Round((cpuModoUsuarioTempoDecorrido / tempoDecorrido) / Environment.ProcessorCount * 100, 2);
-            var usoCpuTotal = Math.Round((cpuTotalTempoDecorrido / tempoDecorrido) / Environment.ProcessorCount * 100, 2);
-
-            return (usoCpuModoPrivilegiado, usoCpuModoUsuario, usoCpuTotal);
-
+            throw new Win32Exception();
         }
-
-        return (0, 0, 0);
 
     }
 
@@ -239,20 +302,20 @@ public class Worker(ILogger<Worker> logger, IConfiguration configuracao) : Backg
         }
     }
 
-    private static ProcessoInfo MapearParaProcesso(ProcessoInfoBase processoBase)
-    {
-        return new ProcessoInfo
-        {
-            Id = processoBase.Id,
-            Nome = processoBase.Nome,
-            NomeExecutavel = processoBase.NomeExecutavel,
-            NumeroThreads = processoBase.NumeroThreads,
-            MemoriaUsoMB = processoBase.MemoriaUsoMB,
-            MemoriaVirtualUsoMB = processoBase.MemoriaVirtualUsoMB,
-            UsoCpuModoUsuario = processoBase.UsoCpuModoUsuario,
-            UsoCpuModoPrivilegiado = processoBase.UsoCpuModoPrivilegiado,
-            UsoCpuTotal = processoBase.UsoCpuTotal,
-            SubProcessos = []
-        };
-    }
+    //private static ProcessoInfo MapearParaProcesso(ProcessoInfoBase processoBase)
+    //{
+    //    return new ProcessoInfo
+    //    {
+    //        Id = processoBase.Id,
+    //        Nome = processoBase.Nome,
+    //        NomeExecutavel = processoBase.NomeExecutavel,
+    //        NumeroThreads = processoBase.NumeroThreads,
+    //        MemoriaUsoMB = processoBase.MemoriaUsoMB,
+    //        MemoriaVirtualUsoMB = processoBase.MemoriaVirtualUsoMB,
+    //        UsoCpuModoUsuario = processoBase.UsoCpuModoUsuario,
+    //        UsoCpuModoPrivilegiado = processoBase.UsoCpuModoPrivilegiado,
+    //        UsoCpuTotal = processoBase.UsoCpuTotal,
+    //        SubProcessos = []
+    //    };
+    //}
 }

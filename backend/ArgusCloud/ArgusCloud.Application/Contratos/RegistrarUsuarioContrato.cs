@@ -10,5 +10,8 @@ namespace ArgusCloud.Application.Contratos
         public required string Senha { get; set; }
         [Required(ErrorMessage = "Token temporário obrigatório", AllowEmptyStrings = false)]
         public required string TokenTemporario { get; set; }
+        public required string NomeMaquina { get; set; }
+        public string? LocalizacaoMaquina { get; set; }
+        public required string SistemaOperacional { get; set; }
     }
 }

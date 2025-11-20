@@ -4,6 +4,7 @@ using ArgusCloud.Application.Contratos;
 using ArgusCloud.Application.Interfaces;
 using ArgusCloud.Domain.Entities;
 using ArgusCloud.Domain.Interfaces.Repositorios;
+using ArgusCloud.Infrastructure.Shared;
 using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -49,9 +50,13 @@ namespace ArgusCloud.API.Controllers
 
                 if (!BCrypt.Net.BCrypt.Verify(contrato.Senha, usuario.SenhaHash)) return Unauthorized();
 
-                var token = _tokenServico.GerarTokenFront(usuario.Id, usuario.Nome);
+                if (usuario.MaquinaId is null) return BadRequest("Agente para este usuário não cadastrado");
 
-                var usuarioContrato = MapearParaUsuarioContrato(usuario, token);
+                var token = _tokenServico.GerarTokenFront(usuario.Id, usuario.MaquinaId.Value);
+
+                Response.Cookies.Append("cookie-signal-r", token, CookiesHttpOnlyConfig.cookieOptions);
+
+                var usuarioContrato = MapearParaUsuarioContrato(usuario);
 
                 return Ok(usuarioContrato);
             }
@@ -115,7 +120,7 @@ namespace ArgusCloud.API.Controllers
 
         [HttpGet("verificarAgente/{maquinaId}")]
         [Authorize(Policy = "RequisitoMaquinaId")]
-        public async Task<IActionResult> VerificarAgente(string maquinaId)
+        public async Task<ActionResult<UsuarioContrato>> VerificarAgente(string maquinaId)
         {
             try
             {
@@ -124,7 +129,18 @@ namespace ArgusCloud.API.Controllers
 
                 var usuario = await _usuarioRepositorio.ObterPorIdAsync(usuarioId);
                 if (usuario != null && Guid.Parse(maquinaId) == usuario.MaquinaId)
-                    return Ok();
+                {
+                    var response = new UsuarioContrato
+                    {
+                        Nome = usuario.Nome,
+                        DataExpiracao = usuario.DataExpiracao,
+                        ExporProcessos = usuario.ExporProcessos,
+                        Id = usuario.Id,
+                        PermiteEspelharemProcessos = usuario.PermiteEspelharemProcessos
+                    };
+
+                    return response;
+                }
 
                 return NotFound();
             }
@@ -149,8 +165,9 @@ namespace ArgusCloud.API.Controllers
                     if (usuario.TokenAgenteHash is not null)
                         return BadRequest();
 
-                    var comando = new GerarTokenDefinitivoComando(usuario, contrato.Senha, contrato.TokenTemporario);
+                    var comando = new GerarTokenDefinitivoComando(usuario, contrato);
                     var usuarioCadastrado = await _mediator.Send(comando, cancellationToken);
+
                     if (usuarioCadastrado is null)
                         return Unauthorized();
 
@@ -167,7 +184,7 @@ namespace ArgusCloud.API.Controllers
             }
         }
 
-        private static UsuarioContrato MapearParaUsuarioContrato(Usuario usuario, string? token = null)
+        private static UsuarioContrato MapearParaUsuarioContrato(Usuario usuario)
         {
             var maquina = usuario.Maquina != null
             ? new MaquinaContrato
@@ -183,10 +200,9 @@ namespace ArgusCloud.API.Controllers
                 Nome = usuario.Nome,
                 DataExpiracao = usuario.DataExpiracao,
                 ExporProcessos = usuario.ExporProcessos,
-                IdUsuario = usuario.Id,
+                Id = usuario.Id,
                 Maquina = maquina,
                 PermiteEspelharemProcessos = usuario.PermiteEspelharemProcessos,
-                Token = token
             };
         }
     }

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ArgusCloud.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class MigracaoInicial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -43,7 +43,6 @@ namespace ArgusCloud.Infrastructure.Migrations
                     DataExpiracao = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     ExporProcessos = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     MaquinaId = table.Column<Guid>(type: "char(36)", nullable: true, collation: "ascii_general_ci"),
-                    MaquinaId1 = table.Column<Guid>(type: "char(36)", nullable: true, collation: "ascii_general_ci"),
                     PermiteEspelharemProcessos = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     TokenAgenteHash = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
@@ -56,17 +55,17 @@ namespace ArgusCloud.Infrastructure.Migrations
                 {
                     table.PrimaryKey("PK_Usuarios", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Usuarios_Maquinas_MaquinaId1",
-                        column: x => x.MaquinaId1,
+                        name: "FK_Usuarios_Maquinas_MaquinaId",
+                        column: x => x.MaquinaId,
                         principalTable: "Maquinas",
                         principalColumn: "Id");
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Usuarios_MaquinaId1",
+                name: "IX_Usuarios_MaquinaId",
                 table: "Usuarios",
-                column: "MaquinaId1");
+                column: "MaquinaId");
         }
 
         /// <inheritdoc />

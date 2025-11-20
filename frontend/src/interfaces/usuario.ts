@@ -3,7 +3,6 @@ export interface IUsuario {
   nome: string
   dataExpiracao: string
   exporProcessos: boolean
-  maquinaId: string | null
   permiteEspelharemProcessos: boolean
   maquina: IMaquina
 }

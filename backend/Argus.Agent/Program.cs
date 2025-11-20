@@ -36,10 +36,10 @@ static async Task RegistrarAgenteAsync()
     Console.WriteLine("Digite seu token temporário de acesso");
     string? tokenTemporario = Console.ReadLine();
 
-    if (string.IsNullOrWhiteSpace(nomeUsuario) || string.IsNullOrWhiteSpace(tokenTemporario))
+    if (string.IsNullOrWhiteSpace(senha) || string.IsNullOrWhiteSpace(nomeUsuario) || string.IsNullOrWhiteSpace(tokenTemporario))
     {
         Console.ForegroundColor = ConsoleColor.Red;
-        Console.WriteLine("Usuário e senha não podem ser vazios");
+        Console.WriteLine("Usuário, token e senha não podem ser vazios");
         Console.ResetColor();
         return;
     }
@@ -51,8 +51,17 @@ static async Task RegistrarAgenteAsync()
     try
     {
         Console.WriteLine("\nValidando credenciais");
-        Console.WriteLine($"{apiBaseUrl}/Usuario/registrarAgente");
-        var response = await cliente.PostAsJsonAsync($"{apiBaseUrl}/Usuario/registrarAgente", new { nomeUsuario, tokenTemporario, senha });
+
+        var contrato = new ContratoRegistrarAgente
+        {
+            NomeMaquina = Environment.MachineName,
+            NomeUsuario = nomeUsuario,
+            Senha = senha,
+            SistemaOperacional = System.Runtime.InteropServices.RuntimeInformation.OSDescription,
+            TokenTemporario = tokenTemporario,
+        };
+
+        var response = await cliente.PostAsJsonAsync($"{apiBaseUrl}/Usuario/registrarAgente", contrato);
 
         if (response.IsSuccessStatusCode)
         {

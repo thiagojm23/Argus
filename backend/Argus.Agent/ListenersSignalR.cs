@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.SignalR.Client;
+﻿using System.Net.Http.Json;
+using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Argus.Agent
 {
@@ -9,11 +10,6 @@ namespace Argus.Agent
         private readonly ILogger<Worker> _logger = logger;
         private readonly HttpClient _httpClient = new();
 
-        // PSEUDOCODE
-        // - Build an HttpRequestMessage for the GET endpoint
-        // - Add Authorization header with Bearer <token>
-        // - Send the request using HttpClient.SendAsync
-        // - Handle response as before
 
         public async Task<HubConnection> RegistrarListeners(string hubUri, string apiBaseUri, string maquinaId)
         {
@@ -29,14 +25,17 @@ namespace Argus.Agent
                 _logger.LogError("Erro ao verificar agente com maquinaId: {maquinaId}", maquinaId);
                 throw new Exception();
             }
-            ;
-            const string tipoCliente = "agente";
+            var dadosResposta = await response.Content.ReadFromJsonAsync<VerificarAgenteContrato>() ?? throw new Exception();
 
-            _hubConnection = new HubConnectionBuilder().WithUrl(hubUri, options =>
+            Worker.processosVisiveisParaRede = dadosResposta.ExporProcessos;
+
+            var queryParms = $"?maquinaId={maquinaId}&tipoCliente=agente";
+
+            _logger.LogInformation("token: {token}", _tokenAutenticacao);
+
+            _hubConnection = new HubConnectionBuilder().WithUrl($"{hubUri}{queryParms}", options =>
             {
                 options.AccessTokenProvider = () => Task.FromResult(_tokenAutenticacao)!;
-                options.Headers.Add("maquinaId", maquinaId);
-                options.Headers.Add("tipoCliente", tipoCliente);
             }).WithAutomaticReconnect().Build();
 
             _hubConnection.On<bool>("RestaurarSessaoAoIniciar", (isEnabled) =>
@@ -47,6 +46,24 @@ namespace Argus.Agent
                     HabilitarAbrirProcessosAoIniciar();
                 else
                     DesabilitarAbrirProcessosAoIniciar();
+            });
+            _hubConnection.On<bool>("AlterarCompartilhamentoDetalhado", (novoValor) =>
+            {
+                _logger.LogInformation("Recebido comando para alterar compartilhamento detalhado, novo valor: {valor}", novoValor);
+
+                Worker.enviarProcessosDetalhados = novoValor;
+            });
+            _hubConnection.On<bool>("AlterarProcessosVisiveisParaRede", (novoValor) =>
+            {
+                _logger.LogInformation("Recebido comando para alterar processos visíveis para rede, novo valor: {valor}", novoValor);
+
+                Worker.processosVisiveisParaRede = novoValor;
+            });
+            _hubConnection.On("AtualizarDashAgente", () =>
+            {
+                _logger.LogInformation("Recebido comando para atualizar processos visíveis para rede (agente)");
+
+                Worker.novoObservadorAdicionado = true;
             });
 
             return _hubConnection;

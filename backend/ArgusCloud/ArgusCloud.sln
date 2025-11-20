@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArgusCloud.Infrastructure",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArgusCloud.API", "ArgusCloud.API\ArgusCloud.API.csproj", "{2E312654-2EC7-45CE-A6BB-F26712896473}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArgusCloud.Domain", "ArgusCloud.Domain\ArgusCloud.Domain.csproj", "{E32FEA52-1FE5-7F3D-A3F1-D616E0EB411D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,8 +57,23 @@ Global
 		{2E312654-2EC7-45CE-A6BB-F26712896473}.Release|x64.Build.0 = Release|Any CPU
 		{2E312654-2EC7-45CE-A6BB-F26712896473}.Release|x86.ActiveCfg = Release|Any CPU
 		{2E312654-2EC7-45CE-A6BB-F26712896473}.Release|x86.Build.0 = Release|Any CPU
+		{E32FEA52-1FE5-7F3D-A3F1-D616E0EB411D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E32FEA52-1FE5-7F3D-A3F1-D616E0EB411D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E32FEA52-1FE5-7F3D-A3F1-D616E0EB411D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{E32FEA52-1FE5-7F3D-A3F1-D616E0EB411D}.Debug|x64.Build.0 = Debug|Any CPU
+		{E32FEA52-1FE5-7F3D-A3F1-D616E0EB411D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E32FEA52-1FE5-7F3D-A3F1-D616E0EB411D}.Debug|x86.Build.0 = Debug|Any CPU
+		{E32FEA52-1FE5-7F3D-A3F1-D616E0EB411D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E32FEA52-1FE5-7F3D-A3F1-D616E0EB411D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E32FEA52-1FE5-7F3D-A3F1-D616E0EB411D}.Release|x64.ActiveCfg = Release|Any CPU
+		{E32FEA52-1FE5-7F3D-A3F1-D616E0EB411D}.Release|x64.Build.0 = Release|Any CPU
+		{E32FEA52-1FE5-7F3D-A3F1-D616E0EB411D}.Release|x86.ActiveCfg = Release|Any CPU
+		{E32FEA52-1FE5-7F3D-A3F1-D616E0EB411D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F892EBE2-9209-433B-81CF-4D6126F9233C}
 	EndGlobalSection
 EndGlobal

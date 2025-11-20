@@ -3,11 +3,11 @@ using MediatR;
 
 namespace ArgusCloud.Application.Comandos
 {
-    public class EnviarProcessosComandoHandler(IProcessoTempoRealServico processoServico) : IRequestHandler<EnviarProcessosComando>
+    public class AtualizarProcessosEmMemoriaHandler(IProcessoTempoRealServico processoServico) : IRequestHandler<AtualizarProcessosEmMemoriaComando>
     {
         private readonly IProcessoTempoRealServico _processoTempoRealServico = processoServico;
 
-        public Task Handle(EnviarProcessosComando request, CancellationToken cancellationToken)
+        public Task Handle(AtualizarProcessosEmMemoriaComando request, CancellationToken cancellationToken)
         {
             _processoTempoRealServico.AtualizarProcessos(request.MaquinaId, request.Processos);
 

@@ -1,4 +1,5 @@
-﻿using Argus.Agent;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using Argus.Agent;
 
 namespace ArgusCloud.Domain.Entities
 {
@@ -6,9 +7,10 @@ namespace ArgusCloud.Domain.Entities
     {
         public Guid Id { get; set; }
         public required string Nome { get; set; }
-        public DateTime DataExpiracao { get; set; };
+        public DateTime DataExpiracao { get; set; }
         public bool ExporProcessos { get; set; } = true;
         public Guid? MaquinaId { get; set; }
+        [ForeignKey("MaquinaId")]
         public virtual Maquina? Maquina { get; set; }
         public bool PermiteEspelharemProcessos { get; set; }
         public required string? TokenAgenteHash { get; set; }

@@ -1,67 +1,64 @@
 <template lang="pug">
-dialog(id="modalDetalhes")
-  h6 20 processos que mais consomem memória no computador&nbsp;
-    span.primary-text NOTEBOOK-THIAGO
-  ul.list.border.top-margin.no-space.large-margin#header
-    li(v-for="processo in processesDetails" :key="processo.id")
-      details
-        summary 
-          span.max {{ processo.nome }}
-          i expand_more
-        ul.list.border.left-padding.small-space
-          li.gap0(v-for="(obj) in Object.entries(processo).filter(([key]) => key !== 'subProcessos')" :key="processo.id + processo.numeroThreads")
-            span.primary-text {{ LABELS_PROCESSES[obj[0]] }}:&nbsp;
-            | {{ obj[1] }}&nbsp;
-            span(v-if="exibirValorEmGB(obj[0])") /
-              span.primary-text &nbsp;{{ calcularGB(processo.memoriaVirtualUsoMB) }}
-          ul.list.border.no-space#header
-            li
-              details
-                summary 
-                  span.max Subprocessos
-                  i expand_more
-                ul.left-padding.list.border.no-space#header(v-for="subProcesso in processo.subProcessos")
-                  li
-                    details
-                      summary 
-                        span.max {{ subProcesso.nome }}
-                        i expand_more
-                      ul.list.border.left-padding.small-space
-                        li.gap0(v-for="(obj) in Object.entries(subProcesso)" :key="subProcesso.id + subProcesso.numeroThreads")
-                          span.primary-text {{ LABELS_PROCESSES[obj[0]] }}:&nbsp;
-                          | {{ obj[1] }}&nbsp;
-                          span(v-if="exibirValorEmGB(obj[0])") /
-                            span.primary-text &nbsp;{{ calcularGB(subProcesso.memoriaVirtualUsoMB) }}
+dialog.modal(id="modalDetalhes")
+  template(v-if="dadosDashboard.processosDetalhados.length")
+    .middle-align
+      h6 20 processos que mais consomem memória no computador&nbsp;
+        span.primary-text {{ dadosUsuario.maquina.nome }}&nbsp;
+          i.vat.cp(@click="abrirDetalhesMaquina") open_in_new
+    ul.headerProcessos.list.border.top-margin.no-space.large-margin.scroll
+      li(v-for="processo in dadosDashboard.processosDetalhados" :key="processo.id")
+        DadosProcesso(:processo="processo")
+  template(v-else)
+    .middle-align.center-align
+      div
+        progress.circle.large
+        .space
+        p.large-text Carregando detalhes dos processos
   nav.right-align.no-space
-    button.transparent.link(data-ui="#modalDetalhes") FECHAR
+    button.transparent.link(@click="pararCompartilhamentoDetalhado" data-ui="#modalDetalhes") FECHAR
 </template>
 <script lang="ts" setup>
-import { reactive } from 'vue'
-import { type IProcessos } from '../interfaces/dashboard'
-import { LABELS_PROCESSES } from '../dadosEstaticos'
+import { ref } from 'vue'
+import dadosDashboard from '../dadosDashboard'
+import dadosUsuario from '../dadosUsuario'
+import router from '../router'
+import { signalRServico } from '../services/signalRservico'
+import DadosProcesso from './dadosProcesso.vue'
 
-const processesDetails = reactive<IProcessos[]>([])
+const maquinaIdObservada = ref('')
 
-function abrirModalDetalhes(processes: IProcessos[]) {
-  Object.assign(processesDetails, processes)
+function abrirModalDetalhes(maquinaIdObservadaParm: string) {
+  maquinaIdObservada.value = maquinaIdObservadaParm
   ui('#modalDetalhes')
 }
 
-function calcularGB(memoriaMB: number): string {
-  return (memoriaMB / 1024).toFixed(2) + ' GB'
+function pararCompartilhamentoDetalhado() {
+  signalRServico.alterarCompartilhamentoDetalhado({
+    maquinaIdObservada: maquinaIdObservada.value,
+    novoValor: false,
+  })
 }
 
-function exibirValorEmGB(key: string): boolean {
-  return ['memoriaVirtualUsoMB'].includes(key)
+function abrirDetalhesMaquina() {
+  router.push({ name: 'detalheMaquina', params: { maquinaId: maquinaIdObservada.value } })
 }
 
 defineExpose({ abrirModalDetalhes })
 </script>
 <style scoped>
-#header > li::before {
-  background-color: #4e198f !important;
+body.light {
+  li {
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #b3b3b3 #ece7eb;
+  }
 }
-summary::before {
-  background-color: #4e198f !important;
+
+body.dark {
+  li {
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #492450 #2b292d;
+  }
 }
 </style>

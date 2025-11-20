@@ -7,6 +7,7 @@ namespace ArgusCloud.Domain.Interfaces.Repositorios
         Task<Usuario> CadastrarUsuarioAsync(Usuario usuario);
         Task<Usuario?> ObterPorIdAsync(Guid id);
         Task<Usuario?> ObterPorNomeAsync(string nome);
+        Task<Usuario?> ObterPorMaquinaIdAsync(Guid maquinaId);
         Task AtualizarAsync(Usuario usuario);
     }
 }

@@ -1,27 +1,18 @@
-// import Pagina from '../pagina.vue'
 import { createRouter, createWebHistory } from 'vue-router'
+import { appRotas } from './appRotas'
+import { authRotas } from './authRotas'
+import utils from '@/utils'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [
-    {
-      path: '/',
-      name: 'login',
-      component: () => import('../components/dashboard.vue'),
-    },
-    {
-      path: '/dashboard',
-      name: 'dashboard',
-      component: () => import('../components/dashboard.vue'),
-      meta: { requiresAuth: true },
-    },
-  ],
+  routes: [...appRotas, ...authRotas],
 })
 
 router.beforeEach((to, from, next) => {
-  const isAuthenticated = localStorage.getItem('token') !== null
+  const isAuthenticated = localStorage.getItem('logado') === 'true'
 
   if (to.matched.some((record) => record.meta.requiresAuth) && !isAuthenticated) {
+    utils.limparDadosSessao()
     next({ name: 'login' })
   } else if (to.name === 'login' && isAuthenticated) {
     next({ name: 'dashboard' })

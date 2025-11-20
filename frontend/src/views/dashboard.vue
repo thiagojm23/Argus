@@ -1,23 +1,19 @@
 <template lang="pug">
-header.absolute.wdt100
-  nav.right-align
-    button.transparent.square.right-margin
-      i.extra logout
 .center.middle.wd70
   article.medium-padding.border.purple-border
     nav.scroll
       span.max.large-text Seu computador
         br
-        span.small-text NOTEBOOK-THIAGO
+        span.small-text {{ dadosUsuario.maquina.nome }}
       label.switch.icon
         p.small-margin.right-margin.large-text Exibir processos para todos
-        input(type="checkbox" v-model="dadosUsuario.exporProcessos")
+        input(type="checkbox" @change="exibirProcessosDebounce" v-model="dadosUsuario.exporProcessos")
         span
           i visibility
       .space
       label.switch.icon(:class="{ 'medium-opacity': !dadosUsuario.exporProcessos }")
         p.small-margin.right-margin.large-text Permitir espelharem seus processos
-        input(type="checkbox" v-model="dadosUsuario.permiteEspelharemProcessos" :disabled="!dadosUsuario.exporProcessos")
+        input(type="checkbox" @change="espelharProcessosDebounce" v-model="dadosUsuario.permiteEspelharemProcessos" :disabled="!dadosUsuario.exporProcessos")
         span
           i screen_share
   article.hg60.large-padding.border.purple-border
@@ -29,51 +25,41 @@ header.absolute.wdt100
             th Tempo em monitoramento
             th Top 20 processos
         tbody
-          tr.wsnw(v-for="usuario in 12")
+          tr.wsnw(v-for="usuario in 1")
             td {{ usuario }}
             td {{ `Descrição ${usuario}` }}
             td
-              a.link.underline(@click="modalDetalhes.abrirModalDetalhes(temporary)") {{ concatProcesses(dadosDashboard) }}
-              //- a.link.underline(@click="modalDetalhes.abrirModalDetalhes(usuario.processos)") {{ concatProcesses(dadosDashboard) }}
+              a.link.underline(v-if="dadosUsuario.exporProcessos" @click="exibirProcessosDetalhados(dadosUsuario.maquina.id)") {{ concatenarProcessos(dadosDashboard.top4Processos) }}
 ModalDetalhes(ref="modalDetalhes")
 </template>
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import dadosDashboard from '../dadosDashboard'
-import { type IProcessos } from '../interfaces/dashboard'
-import ModalDetalhes from './modalDetalhes.vue'
+import { onMounted, ref } from 'vue'
+import ModalDetalhes from '../components/modalDetalhes.vue'
+import { signalRServico } from '../services/signalRservico'
 import dadosUsuario from '../dadosUsuario'
 import utils from '../utils'
+import dadosDashboard from '../dadosDashboard'
 
 const modalDetalhes = ref<InstanceType<typeof ModalDetalhes>>()
 
-const temporary = <IProcessos[]>dadosDashboard
-
 const exibirProcessosDebounce = utils.debounce(() => {
+  signalRServico.alterarProcessosVisiveisParaRede(dadosUsuario.exporProcessos)
   console.log('Chamada API exibir processos', dadosUsuario.exporProcessos)
 }, 3000)
 const espelharProcessosDebounce = utils.debounce(() => {
   console.log('Chamada API espelhar processos', dadosUsuario.permiteEspelharemProcessos)
 }, 3000)
 
-watch(
-  () => dadosUsuario.exporProcessos,
-  (valor) => {
-    if (!valor) dadosUsuario.permiteEspelharemProcessos = false
-    exibirProcessosDebounce()
-  },
-)
-watch(
-  () => dadosUsuario.permiteEspelharemProcessos,
-  () => {
-    espelharProcessosDebounce()
-  },
-)
+onMounted(() => {
+  signalRServico.iniciarConexao()
+})
 
-function concatProcesses(processes: IProcessos[]): string {
-  return processes
-    .map((p) => p.nome.split('-')[0].trim())
-    .slice(0, 4)
-    .join(' -- ')
+function exibirProcessosDetalhados(maquinaIdObservada: string) {
+  signalRServico.alterarCompartilhamentoDetalhado({ maquinaIdObservada, novoValor: true })
+  modalDetalhes.value?.abrirModalDetalhes(maquinaIdObservada)
+}
+
+function concatenarProcessos(processos: string[]): string {
+  return processos.map((p) => p.split('-')[0].trim()).join(' -- ')
 }
 </script>
