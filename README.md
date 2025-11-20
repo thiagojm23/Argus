@@ -138,4 +138,5 @@ Após o registro, inicie o serviço de monitoramento:
 Bash
 
 dotnet run
+
 Este código foi desenvolvido para fins de aprendizado e demonstração de arquitetura.
